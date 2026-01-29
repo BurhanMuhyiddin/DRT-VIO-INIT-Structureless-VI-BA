@@ -1,5 +1,5 @@
 # Addition to DRT-VIO-INIT
-This repository implements paper specified below to refine DRT-VIO-INIT results via **Structureless VI Bundle Adjustment**.
+This repository implements paper specified below to refine DRT-VIO-INIT results via **Structureless VI Bundle Adjustment**. Paper link: https://arxiv.org/pdf/2502.16598
 
 # drt-vio-initialization
 ## Decoupled Rotation and Translation VIO initialization
