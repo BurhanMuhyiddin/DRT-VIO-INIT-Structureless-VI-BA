@@ -26,4 +26,4 @@ private:
     double para_speed_bias[WINDOW_SIZE][SIZE_SPEEDBIAS];
 };
 
-#endif
+#endif // STRUCTURELESS_VI_BA_H

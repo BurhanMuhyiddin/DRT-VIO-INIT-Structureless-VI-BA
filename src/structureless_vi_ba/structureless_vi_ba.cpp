@@ -19,11 +19,65 @@ bool StructurelessVIBA::optimize()
     {
         size_t j = i + 1;
 
-        ImuIntegFactor *imu_factor = new ImuIntegFactor(drt_vio_init_ptr_->imu_meas[j]);
+        ImuIntegFactor* imu_factor = new ImuIntegFactor(drt_vio_init_ptr_->imu_meas[j]);
         problem.AddResidualBlock(imu_factor, NULL, para_pose[i], para_speed_bias[i], para_pose[j], para_speed_bias[j]);
     }
 
     // Add epipolar constraint factors
+    for (size_t i = 0; i < drt_vio_init_ptr_->int_frameid2_time_frameid.size() - 1; i++)
+    {
+        auto target1_tid = int_frameid2_time_frameid.at(i);
+        auto target2_tid = int_frameid2_time_frameid.at(i + 1);
+
+        for (const auto &pts : drt_vio_init_ptr_->SFMConstruct)
+        {
+            // if a point is observed by two keyframes
+            if (pts.second.obs.find(target1_tid) != pts.second.obs.end() &&
+                pts.second.obs.find(target2_tid) != pts.second.obs.end())
+            {
+                Eigen::Vector3d zi = pts.second.obs.at(target1_tid).normalpoint;
+                Eigen::Vector3d zj = pts.second.obs.at(target2_tid).normalpoint;
+
+                EpipolarConstraintFactor* epipolar_constraint_factor = new EpipolarConstraintFactor(zi, zj, RIC[0], TIC[0]);
+                problem.AddResidualBlock(epipolar_constraint_factor, NULL, para_pose[i], para_pose[j]);
+            }
+        }
+    }
+
+    // Start optimization
+    ceres::Solver::Options options;
+    options.max_num_iterations = 200;
+    options.gradient_tolerance = 1e-20;
+    options.function_tolerance = 1e-20;
+    options.parameter_tolerance = 1e-20;
+    options.linear_solver_type = ceres::DENSE_SCHUR;
+    options.trust_region_strategy_type = ceres::DOGLEG;
+    options.minimizer_progress_to_stdout = false;
+    ceres::Solver::Summary summary;
+
+    try
+    {
+        ceres::Solve(options, &problem, &summary);
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << "[CERES EXCEPTION] " << e.what() << std::endl;
+        false;
+    }
+    catch (...)
+    {
+        std::cerr << "[CERES UNKNOWN EXCEPTION]" << std::endl;
+        return false;
+    }
+
+    if (summary.termination_type != ceres::TerminationType::CONVERGENCE)
+    {
+        std::cerr << "structureless-vi-ba did not converge" << std::endl;
+        return false;
+    }
+
+    // get optimized parameters here.
+    
 }
 
 void StructurelessVIBA::states_to_double_array()
