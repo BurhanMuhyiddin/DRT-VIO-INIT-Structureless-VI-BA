@@ -180,13 +180,26 @@ namespace DRT
             position[i] = s * position[i] - rotation[i] * pbc_;
             velocity[i] = rotation[i] * x.segment<3>(i * 3);
         }
-
-        Eigen::Matrix3d rot0 = rotation[0].transpose();
+        
+        // Here everything is aligned with respect to the first frame
+        // Eigen::Matrix3d rot0 = rotation[0].transpose();
+        // gravity = rot0 * gravity;
+        // for (int i = 0; i < int_frameid2_time_frameid.size(); i++) {
+        //     rotation[i] = rot0 * rotation[i];
+        //     position[i] = rot0 * position[i];
+        //     velocity[i] = rot0 * velocity[i];
+        // }
+        
+        // Align with respect to the global frame (gravity aligned)
+        Eigen::Matrix3d rot0 = Utility::g2R(gravity);
+        double yaw = Utility::R2ypr(rot0 * rotation[0]).x();
+        rot0 = Utility::ypr2R(Eigen::Vector3d{-yaw, 0, 0}) * rot0;
         gravity = rot0 * gravity;
+        Eigen::Matrix3d rot_diff = rot0;
         for (int i = 0; i < int_frameid2_time_frameid.size(); i++) {
-            rotation[i] = rot0 * rotation[i];
-            position[i] = rot0 * position[i];
-            velocity[i] = rot0 * velocity[i];
+            rotation[i] = rot_diff * rotation[i];
+            position[i] = rot_diff * position[i];
+            velocity[i] = rot_diff * velocity[i];
         }
 
         cout << "refine: " << gravity.norm() << " " << G.norm() << endl;

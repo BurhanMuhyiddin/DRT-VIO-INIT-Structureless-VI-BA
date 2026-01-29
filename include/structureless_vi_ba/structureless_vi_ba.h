@@ -13,8 +13,12 @@ public:
 
     bool optimize();
 
+    using Ptr = std::shared_ptr<StructurelessVIBA>;
+
 private:
     void states_to_double_array();
+
+    void double_array_to_states() const;
 
 private:
     DRT::drtVioInit::Ptr drt_vio_init_ptr_;

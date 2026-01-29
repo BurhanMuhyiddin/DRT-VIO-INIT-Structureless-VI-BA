@@ -12,6 +12,7 @@
 #include "initMethod/drtTightlyCoupled.h"
 #include "utils/eigenUtils.hpp"
 #include "utils/ticToc.h"
+#include "structureless_vi_ba.h"
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc/types_c.h>
@@ -59,6 +60,7 @@ int main(int argc, char **argv) {
             pDrtVioInit.reset(new DRT::drtLooselyCoupled(RIC[0], TIC[0]));
         }
 
+        StructurelessVIBA::Ptr structureless_vi_ba = std::make_shared<StructurelessVIBA>(pDrtVioInit);
 
         std::vector<int> idx;
 
@@ -267,6 +269,9 @@ int main(int argc, char **argv) {
             std::cout << "rot_error: " << "nan" << std::endl;
             continue;
         }
+
+        // Apply bundle adjustement here
+        structureless_vi_ba->optimize();
 
         // 获取真实值
         std::vector<Eigen::Vector3d> gt_pos;

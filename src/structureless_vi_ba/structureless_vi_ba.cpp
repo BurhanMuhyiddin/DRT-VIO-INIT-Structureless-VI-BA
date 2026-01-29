@@ -76,8 +76,8 @@ bool StructurelessVIBA::optimize()
         return false;
     }
 
-    // get optimized parameters here.
-    
+    // update old states with the optimized ones
+    double_array_to_states();
 }
 
 void StructurelessVIBA::states_to_double_array()
@@ -107,5 +107,42 @@ void StructurelessVIBA::states_to_double_array()
         para_speed_bias[i][6] = drt_vio_init_ptr_->biasa[0];
         para_speed_bias[i][7] = drt_vio_init_ptr_->biasa[1];
         para_speed_bias[i][8] = drt_vio_init_ptr_->biasa[2];
+    }
+}
+
+void StructurelessVIBA::double_array_to_states() const
+{
+    Eigen::Vector3d origin_R0 = Utility::R2ypr(drt_vio_init_ptr_->rotation[0]);
+    Eigen::Vector3d origin_P0 = drt_vio_init_ptr_->position[0];
+
+    Eigen::Vector3d origin_R00 = Utility::R2ypr(Utils::(so3d2SO3d(para_pose[0])));
+
+    double y_diff = origin_R0.x() - origin_R00.x();
+    Eigen::Matrix3d rot_diff = Utility::ypr2R(Eigen::Vector3d(y_diff, 0, 0));
+    if (abs(abs(origin_R0.y()) - 90) < 1.0 || abs(abs(origin_R00.y()) - 90) < 1.0)
+    {
+        std::cerr << "Euler singularity!!!" << std::endl;
+        rot_diff = drt_vio_init_ptr_->rotation[0] * Utils::(so3d2SO3d(para_pose[0])).transpose();
+    }
+
+    for (size_t i = 0; i < WINDOW_SIZE; i++)
+    {
+        drt_vio_init_ptr_->rotation[i] = rot_diff * Utils::(so3d2SO3d(para_pose[i]));
+
+        drt_vio_init_ptr_->position[i] = rot_diff * Eigen::Vector3d(para_pose[i][0] - para_pose[0][0],
+                                                                para_pose[i][1] - para_pose[0][1],
+                                                                para_pose[i][2] - para_pose[0][2]) + origin_P0;
+        
+        drt_vio_init_ptr_->velocity[i] = rot_diff * Eigen::Vector3d(para_speed_bias[i][0],
+                                                                para_speed_bias[i][1],
+                                                                para_speed_bias[i][2]);
+
+        drt_vio_init_ptr_->biasg[0] = Eigen::Vector3d(para_speed_bias[i][3],
+                                                    para_speed_bias[i][4],
+                                                    para_speed_bias[i][5]);
+
+        drt_vio_init_ptr_->biasa[0] = Eigen::Vector3d(para_speed_bias[i][6],
+                                                    para_speed_bias[i][7],
+                                                    para_speed_bias[i][8]);
     }
 }
