@@ -1,4 +1,6 @@
-#include "structureless_vi_ba.h"
+#include "structureless_vi_ba/structureless_vi_ba.h"
+
+using namespace vio;
 
 StructurelessVIBA::StructurelessVIBA(DRT::drtVioInit::Ptr drt_vio_init_ptr) :
                                     drt_vio_init_ptr_{drt_vio_init_ptr}
@@ -17,41 +19,53 @@ bool StructurelessVIBA::optimize()
     // Add preintegration factors for each keyframe inside sliding window
     for (size_t i = 0; i < drt_vio_init_ptr_->local_active_frames.size(); i++)
     {
+        ceres::LocalParameterization* pose_param = new PoseSO3LocalParameterization();
+        problem.AddParameterBlock(para_pose[i], SIZE_PARAMETERIZATION::SIZE_POSE, pose_param);
+        problem.AddParameterBlock(para_speed_bias[i], SIZE_PARAMETERIZATION::SIZE_SPEEDBIAS);
+    }
+
+    for (size_t i = 0; i < drt_vio_init_ptr_->local_active_frames.size() - 1; i++)
+    {
         size_t j = i + 1;
 
-        ImuIntegFactor* imu_factor = new ImuIntegFactor(drt_vio_init_ptr_->imu_meas[j]);
+        if (drt_vio_init_ptr_->imu_meas[j].sum_dt_ > 10)
+            continue;
+
+        ImuIntegFactor* imu_factor = new ImuIntegFactor(&drt_vio_init_ptr_->imu_meas[j]);
         problem.AddResidualBlock(imu_factor, NULL, para_pose[i], para_speed_bias[i], para_pose[j], para_speed_bias[j]);
     }
 
     // Add epipolar constraint factors
-    for (size_t i = 0; i < drt_vio_init_ptr_->int_frameid2_time_frameid.size() - 1; i++)
-    {
-        auto target1_tid = int_frameid2_time_frameid.at(i);
-        auto target2_tid = int_frameid2_time_frameid.at(i + 1);
+    // for (size_t i = 0; i < drt_vio_init_ptr_->int_frameid2_time_frameid.size() - 1; i++)
+    // {
+    //     auto target1_tid = drt_vio_init_ptr_->int_frameid2_time_frameid.at(i);
+    //     auto target2_tid = drt_vio_init_ptr_->int_frameid2_time_frameid.at(i + 1);
 
-        for (const auto &pts : drt_vio_init_ptr_->SFMConstruct)
-        {
-            // if a point is observed by two keyframes
-            if (pts.second.obs.find(target1_tid) != pts.second.obs.end() &&
-                pts.second.obs.find(target2_tid) != pts.second.obs.end())
-            {
-                Eigen::Vector3d zi = pts.second.obs.at(target1_tid).normalpoint;
-                Eigen::Vector3d zj = pts.second.obs.at(target2_tid).normalpoint;
+    //     for (const auto &pts : drt_vio_init_ptr_->SFMConstruct)
+    //     {
+    //         // if a point is observed by two keyframes
+    //         if (pts.second.obs.find(target1_tid) != pts.second.obs.end() &&
+    //             pts.second.obs.find(target2_tid) != pts.second.obs.end())
+    //         {
+    //             Eigen::Vector3d zi = pts.second.obs.at(target1_tid).normalpoint;
+    //             Eigen::Vector3d zj = pts.second.obs.at(target2_tid).normalpoint;
 
-                EpipolarConstraintFactor* epipolar_constraint_factor = new EpipolarConstraintFactor(zi, zj, RIC[0], TIC[0]);
-                problem.AddResidualBlock(epipolar_constraint_factor, NULL, para_pose[i], para_pose[j]);
-            }
-        }
-    }
+    //             EpipolarConstraintFactor* epipolar_constraint_factor = new EpipolarConstraintFactor(zi, zj, RIC[0], TIC[0]);
+    //             problem.AddResidualBlock(epipolar_constraint_factor, NULL, para_pose[i], para_pose[i+1]);
+    //         }
+    //     }
+    // }
 
     // Start optimization
     ceres::Solver::Options options;
-    options.max_num_iterations = 200;
-    options.gradient_tolerance = 1e-20;
-    options.function_tolerance = 1e-20;
-    options.parameter_tolerance = 1e-20;
+    options.max_num_iterations = 1000;
+    // options.gradient_tolerance = 1e-20;
+    // options.function_tolerance = 1e-20;
+    // options.parameter_tolerance = 1e-20;
     options.linear_solver_type = ceres::DENSE_SCHUR;
     options.trust_region_strategy_type = ceres::DOGLEG;
+    // options.linear_solver_type = ceres::SPARSE_NORMAL_CHOLESKY;
+    // options.trust_region_strategy_type = ceres::LEVENBERG_MARQUARDT;
     options.minimizer_progress_to_stdout = false;
     ceres::Solver::Summary summary;
 
@@ -78,6 +92,8 @@ bool StructurelessVIBA::optimize()
 
     // update old states with the optimized ones
     double_array_to_states();
+
+    return true;
 }
 
 void StructurelessVIBA::states_to_double_array()
@@ -115,19 +131,19 @@ void StructurelessVIBA::double_array_to_states() const
     Eigen::Vector3d origin_R0 = Utility::R2ypr(drt_vio_init_ptr_->rotation[0]);
     Eigen::Vector3d origin_P0 = drt_vio_init_ptr_->position[0];
 
-    Eigen::Vector3d origin_R00 = Utility::R2ypr(Utils::(so3d2SO3d(para_pose[0])));
+    Eigen::Vector3d origin_R00 = Utility::R2ypr(Utility::so3d2SO3d(para_pose[0]));
 
     double y_diff = origin_R0.x() - origin_R00.x();
     Eigen::Matrix3d rot_diff = Utility::ypr2R(Eigen::Vector3d(y_diff, 0, 0));
     if (abs(abs(origin_R0.y()) - 90) < 1.0 || abs(abs(origin_R00.y()) - 90) < 1.0)
     {
         std::cerr << "Euler singularity!!!" << std::endl;
-        rot_diff = drt_vio_init_ptr_->rotation[0] * Utils::(so3d2SO3d(para_pose[0])).transpose();
+        rot_diff = drt_vio_init_ptr_->rotation[0] * Utility::so3d2SO3d(para_pose[0]).transpose();
     }
 
     for (size_t i = 0; i < WINDOW_SIZE; i++)
     {
-        drt_vio_init_ptr_->rotation[i] = rot_diff * Utils::(so3d2SO3d(para_pose[i]));
+        drt_vio_init_ptr_->rotation[i] = rot_diff * Utility::so3d2SO3d(para_pose[i]);
 
         drt_vio_init_ptr_->position[i] = rot_diff * Eigen::Vector3d(para_pose[i][0] - para_pose[0][0],
                                                                 para_pose[i][1] - para_pose[0][1],
@@ -137,11 +153,11 @@ void StructurelessVIBA::double_array_to_states() const
                                                                 para_speed_bias[i][1],
                                                                 para_speed_bias[i][2]);
 
-        drt_vio_init_ptr_->biasg[0] = Eigen::Vector3d(para_speed_bias[i][3],
+        drt_vio_init_ptr_->biasg = Eigen::Vector3d(para_speed_bias[i][3],
                                                     para_speed_bias[i][4],
                                                     para_speed_bias[i][5]);
 
-        drt_vio_init_ptr_->biasa[0] = Eigen::Vector3d(para_speed_bias[i][6],
+        drt_vio_init_ptr_->biasa = Eigen::Vector3d(para_speed_bias[i][6],
                                                     para_speed_bias[i][7],
                                                     para_speed_bias[i][8]);
     }

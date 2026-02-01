@@ -3,6 +3,10 @@
 
 #include "initMethod/drtVioInit.h"
 #include "factor/imuIntegFactor.h"
+#include "factor/epipolar_contraint_factor.h"
+#include "factor/pose_so3_local_parametrization.h"
+#include "featureTracker/parameters.h"
+#include "utils/eigenUtils.hpp"
 
 #include <ceres/ceres.h>
 
@@ -22,12 +26,9 @@ private:
 
 private:
     DRT::drtVioInit::Ptr drt_vio_init_ptr_;
-    
-    constexpr int SIZE_POSE {6};
-    constexpr int SIZE_SPEEDBIAS {9};
 
-    double para_pose[WINDOW_SIZE][SIZE_POSE];
-    double para_speed_bias[WINDOW_SIZE][SIZE_SPEEDBIAS];
+    double para_pose[WINDOW_SIZE][SIZE_PARAMETERIZATION::SIZE_POSE];
+    double para_speed_bias[WINDOW_SIZE][SIZE_PARAMETERIZATION::SIZE_SPEEDBIAS];
 };
 
 #endif // STRUCTURELESS_VI_BA_H

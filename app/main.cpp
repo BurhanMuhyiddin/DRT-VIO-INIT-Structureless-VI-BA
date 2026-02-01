@@ -12,7 +12,7 @@
 #include "initMethod/drtTightlyCoupled.h"
 #include "utils/eigenUtils.hpp"
 #include "utils/ticToc.h"
-#include "structureless_vi_ba.h"
+#include "structureless_vi_ba/structureless_vi_ba.h"
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc/types_c.h>
@@ -50,6 +50,7 @@ int main(int argc, char **argv) {
     for (int i = 0; i < vio_dataset->get_image_timestamps().size() - 100; i += 10) {
 
         DRT::drtVioInit::Ptr  pDrtVioInit;
+        StructurelessVIBA::Ptr structureless_vi_ba;
         if (string(codeType) == "drtTightly")
         {
             pDrtVioInit.reset(new DRT::drtTightlyCoupled(RIC[0], TIC[0]));
@@ -60,7 +61,7 @@ int main(int argc, char **argv) {
             pDrtVioInit.reset(new DRT::drtLooselyCoupled(RIC[0], TIC[0]));
         }
 
-        StructurelessVIBA::Ptr structureless_vi_ba = std::make_shared<StructurelessVIBA>(pDrtVioInit);
+        structureless_vi_ba.reset(new StructurelessVIBA(pDrtVioInit));
 
         std::vector<int> idx;
 
@@ -270,8 +271,22 @@ int main(int argc, char **argv) {
             continue;
         }
 
+        std::cout << "DRT-VIO-INIT success. Going to optimize\n";
+
+        std::cout << "Before optimization\n";
+        std::cout << "bg: " << pDrtVioInit->biasg.transpose() << "\n";
+
         // Apply bundle adjustement here
-        structureless_vi_ba->optimize();
+        if (!structureless_vi_ba->optimize())
+        {
+            std::cout << "VI-BA optimization failed\n";
+            continue;
+        }
+
+        // std::cout << "After optimization\n";
+        // std::cout << "bg: " << pDrtVioInit->biasg.transpose() << "\n";
+
+        // return 0;
 
         // 获取真实值
         std::vector<Eigen::Vector3d> gt_pos;
@@ -441,6 +456,7 @@ int main(int argc, char **argv) {
             save_file << "v0_error: " << v0_error << std::endl;
         }
 
+        return 0;
     }
 
 }

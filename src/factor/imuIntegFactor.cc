@@ -59,8 +59,8 @@ bool ImuIntegFactor::Evaluate(double const* const* parameters, double* residuals
             // translation
             jacobian_pose_i.block<3, 3>(6, 3) = -Eigen::Matrix3d::Identity();  // eq.(71)  dep/dp
 
-//             std::cout << "~~~~~~~~~~ jacobian_pose_i ~~~~~~~~~~~\n";
-//             std::cout << jacobian_pose_i << std::endl;
+            // std::cout << "~~~~~~~~~~ jacobian_pose_i ~~~~~~~~~~~\n";
+            // std::cout << jacobian_pose_i << std::endl;
 
             jacobian_pose_i = sqrt_info_ * jacobian_pose_i;
 

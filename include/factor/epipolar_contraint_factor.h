@@ -23,16 +23,16 @@ namespace vio
               p_IC_(p_IC)
         {}
 
-        bool Evaluate(double const* const* params,
+        bool Evaluate(double const* const* parameters,
                     double* residuals,
-                    double** jacobians) const override;
+                    double** jacobians) const;
 
     private:
         const Eigen::Vector3d zi_;
         const Eigen::Vector3d zj_;
-        const Eigen::Matrix3d R_IC_;
-        const Eigen::Vector3d p_IC_;
-    }
+        Eigen::Matrix3d R_IC_;
+        Eigen::Vector3d p_IC_;
+    };
 }
 
 #endif // EPIPOLAR_CONSTRAINT_FACTOR_H

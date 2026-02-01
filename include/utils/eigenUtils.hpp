@@ -6,6 +6,7 @@
 #define VANISHINGPOINT_EIGEN_UTILS_HPP
 
 #include <eigen3/Eigen/Dense>
+#include <sophus/se3.hpp>
 
 class Utility {
 public:
@@ -73,7 +74,7 @@ public:
 
     static Eigen::Matrix3d so3d2SO3d(const double* rot_vector)
     {
-        Eigen::Map<Eigen::Vector3d> rot_eigen(rot_vector);
+        Eigen::Map<const Eigen::Vector3d> rot_eigen(rot_vector);
         return Sophus::SO3d::exp(rot_eigen).matrix();
     }
 };
