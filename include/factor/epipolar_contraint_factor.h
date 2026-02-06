@@ -21,7 +21,9 @@ namespace vio
               zj_(zj),
               R_IC_(R_IC),
               p_IC_(p_IC)
-        {}
+        {
+            sqrt_info_ = 458.654 / 1.5;
+        }
 
         bool Evaluate(double const* const* parameters,
                     double* residuals,
@@ -32,6 +34,7 @@ namespace vio
         const Eigen::Vector3d zj_;
         Eigen::Matrix3d R_IC_;
         Eigen::Vector3d p_IC_;
+        double sqrt_info_;
     };
 }
 

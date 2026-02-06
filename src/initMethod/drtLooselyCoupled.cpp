@@ -202,13 +202,10 @@ namespace DRT
             velocity[i] = rot_diff * velocity[i];
         }
 
-        cout << "refine: " << gravity.norm() << " " << G.norm() << endl;
+        cout << "gravity vector: " << gravity.transpose() << " | refine: " << gravity.norm() << " " << G.norm() << endl;
 
         return true;
     }
-
-
-
 
     void drtLooselyCoupled::build_LTL(Eigen::MatrixXd &LTL, Eigen::MatrixXd &A_lr) {
         // #pragma omp parallel for shared(A_lr, LTL)

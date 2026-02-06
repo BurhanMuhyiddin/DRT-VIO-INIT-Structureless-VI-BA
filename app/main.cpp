@@ -283,8 +283,8 @@ int main(int argc, char **argv) {
             continue;
         }
 
-        // std::cout << "After optimization\n";
-        // std::cout << "bg: " << pDrtVioInit->biasg.transpose() << "\n";
+        std::cout << "After optimization\n";
+        std::cout << "bg: " << pDrtVioInit->biasg.transpose() << "\n";
 
         // return 0;
 

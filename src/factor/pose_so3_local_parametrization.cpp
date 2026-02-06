@@ -15,7 +15,6 @@ bool PoseSO3LocalParameterization::Plus(
     Eigen::Map<const Eigen::Vector3d> dp(delta + 3);
 
     // Convert so3 -> SO3
-    std::cout << "omega: " << omega.transpose() << "\n";
     Sophus::SO3d R = Sophus::SO3d::exp(omega);
 
     // Right-multiplicative update

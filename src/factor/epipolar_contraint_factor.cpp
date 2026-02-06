@@ -12,7 +12,7 @@ namespace vio
 
         Eigen::Vector3d omegaj(parameters[1][0], parameters[1][1], parameters[1][2]);
         Eigen::Vector3d Pj(parameters[1][3], parameters[1][4], parameters[1][5]);
-        Eigen::Matrix3d Rj = Sophus::SO3d::exp(omegai).matrix();
+        Eigen::Matrix3d Rj = Sophus::SO3d::exp(omegaj).matrix();
 
         // Calculate A and B vectors eq(14)
         Eigen::Vector3d B = Ri * R_IC_ * zi_;
@@ -26,7 +26,6 @@ namespace vio
         double t_norm = t.norm();
         if (t_norm < 1e-8)
         {
-            std::cout << "This is correct\n";
             residuals[0] = 0.0;
             return true;
         }
@@ -36,6 +35,7 @@ namespace vio
 
         // Calculate residual eq(14)
         residuals[0] = A.transpose() * (C.cross(B));
+        // residuals[0] *= sqrt_info_;
 
         // Calculate analytical Jacobians from eq(15) to eq(19)
         if (jacobians)
@@ -55,6 +55,7 @@ namespace vio
 
                 Ji.block<1,3>(0, 0) = A.transpose() * Cx * (-Ri * Utility::skewSymmetric(R_IC_ * zi_)) + 
                                     -A.transpose() * Bx * dC_dt * (-Ri * Utility::skewSymmetric(p_IC_));
+                // Ji = Ji * sqrt_info_;
             }
 
             if (jacobians[1])
@@ -66,6 +67,7 @@ namespace vio
 
                 Jj.block<1,3>(0,0) = ((C.cross(B)).transpose() * (-Rj * Utility::skewSymmetric(R_IC_ * zj_))) +
                     (-A.transpose() * Bx * dC_dt * (Rj * Utility::skewSymmetric(p_IC_)));
+                // Jj = Jj * sqrt_info_;
             }
         }
 
