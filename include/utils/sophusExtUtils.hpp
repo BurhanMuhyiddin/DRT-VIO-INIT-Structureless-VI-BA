@@ -90,7 +90,7 @@ inline void rightJacobianInvSO3(const Eigen::MatrixBase<Derived1> &phi,
     // at phi=pi, but we still aim to return a reasonable value for all valid
     // inputs.
 
-    if (phi_norm < M_PI - Sophus::Constants<Scalar>::epsilonSqrt()) {
+    if (phi_norm < M_PI - std::sqrt(std::numeric_limits<Scalar>::epsilon())) {
       // regular case for range (0,pi)
       J += phi_hat2 * (1 / phi_norm2 - (1 + std::cos(phi_norm)) /
                                            (2 * phi_norm * std::sin(phi_norm)));

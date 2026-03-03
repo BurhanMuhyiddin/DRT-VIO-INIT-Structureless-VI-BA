@@ -62,7 +62,7 @@ bool StructurelessVIBA::optimize()
     options.gradient_tolerance = 1e-20;
     options.function_tolerance = 1e-20;
     options.parameter_tolerance = 1e-20;
-    options.linear_solver_type = ceres::DENSE_SCHUR;
+    options.linear_solver_type = ceres::DENSE_NORMAL_CHOLESKY;
     options.trust_region_strategy_type = ceres::DOGLEG;
     options.minimizer_progress_to_stdout = false;
     ceres::Solver::Summary summary;
@@ -151,12 +151,10 @@ void StructurelessVIBA::double_array_to_states() const
                                                                 para_speed_bias[i][1],
                                                                 para_speed_bias[i][2]);
 
-        drt_vio_init_ptr_->biasg = Eigen::Vector3d(para_speed_bias[i][3],
-                                                    para_speed_bias[i][4],
-                                                    para_speed_bias[i][5]);
+    drt_vio_init_ptr_->biasg = Eigen::Vector3d(
+        para_speed_bias[0][3], para_speed_bias[0][4], para_speed_bias[0][5]);
 
-        drt_vio_init_ptr_->biasa = Eigen::Vector3d(para_speed_bias[i][6],
-                                                    para_speed_bias[i][7],
-                                                    para_speed_bias[i][8]);
+    drt_vio_init_ptr_->biasa = Eigen::Vector3d(
+        para_speed_bias[0][6], para_speed_bias[0][7], para_speed_bias[0][8]);
     }
 }

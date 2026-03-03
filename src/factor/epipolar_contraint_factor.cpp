@@ -35,7 +35,7 @@ namespace vio
 
         // Calculate residual eq(14)
         residuals[0] = A.transpose() * (C.cross(B));
-        // residuals[0] *= sqrt_info_;
+        residuals[0] *= sqrt_info_;
 
         // Calculate analytical Jacobians from eq(15) to eq(19)
         if (jacobians)
@@ -55,7 +55,7 @@ namespace vio
 
                 Ji.block<1,3>(0, 0) = A.transpose() * Cx * (-Ri * Utility::skewSymmetric(R_IC_ * zi_)) + 
                                     -A.transpose() * Bx * dC_dt * (-Ri * Utility::skewSymmetric(p_IC_));
-                // Ji = Ji * sqrt_info_;
+                Ji = Ji * sqrt_info_;
             }
 
             if (jacobians[1])
@@ -67,7 +67,7 @@ namespace vio
 
                 Jj.block<1,3>(0,0) = ((C.cross(B)).transpose() * (-Rj * Utility::skewSymmetric(R_IC_ * zj_))) +
                     (-A.transpose() * Bx * dC_dt * (Rj * Utility::skewSymmetric(p_IC_)));
-                // Jj = Jj * sqrt_info_;
+                Jj = Jj * sqrt_info_;
             }
         }
 

@@ -193,7 +193,7 @@ namespace DRT
         // Align with respect to the global frame (gravity aligned)
         Eigen::Matrix3d rot0 = Utility::g2R(gravity);
         double yaw = Utility::R2ypr(rot0 * rotation[0]).x();
-        rot0 = Utility::ypr2R(Eigen::Vector3d{-yaw, 0, 0}) * rot0;
+        // rot0 = Utility::ypr2R(Eigen::Vector3d{-yaw, 0, 0}) * rot0;
         gravity = rot0 * gravity;
         Eigen::Matrix3d rot_diff = rot0;
         for (int i = 0; i < int_frameid2_time_frameid.size(); i++) {
