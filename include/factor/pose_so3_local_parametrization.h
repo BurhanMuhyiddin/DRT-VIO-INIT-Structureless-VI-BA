@@ -3,7 +3,8 @@
 
 #include <ceres/ceres.h>
 #include <Eigen/Core>
-#include <sophus/so3.hpp>
+#include <sophus/se3.hpp>
+#include <factor/se3.hpp>
 
 class PoseSO3LocalParameterization : public ceres::LocalParameterization {
 public:

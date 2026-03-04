@@ -61,7 +61,9 @@ ADD_LIBRARY(MyVio SHARED
         src/initMethod/polynomial.cc
         src/visualization/visualize.cpp
         src/factor/imuIntegFactor.cc
-
+        src/structureless_vi_ba/structureless_vi_ba.cpp
+        src/factor/pose_so3_local_parametrization.cpp
+        src/factor/epipolar_contraint_factor.cpp
         )
 
 target_link_libraries(MyVio

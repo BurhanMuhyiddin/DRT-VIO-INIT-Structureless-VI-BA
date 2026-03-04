@@ -62,7 +62,7 @@ bool StructurelessVIBA::optimize()
     options.gradient_tolerance = 1e-20;
     options.function_tolerance = 1e-20;
     options.parameter_tolerance = 1e-20;
-    options.linear_solver_type = ceres::DENSE_NORMAL_CHOLESKY;
+    options.linear_solver_type = ceres::SPARSE_SCHUR;
     options.trust_region_strategy_type = ceres::DOGLEG;
     options.minimizer_progress_to_stdout = false;
     ceres::Solver::Summary summary;
@@ -74,7 +74,7 @@ bool StructurelessVIBA::optimize()
     catch (const std::exception& e)
     {
         std::cerr << "[CERES EXCEPTION] " << e.what() << std::endl;
-        false;
+        return false;
     }
     catch (...)
     {

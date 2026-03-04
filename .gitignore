@@ -1,4 +1,3 @@
 build
 result/*.txt
-thirdparty/eigen/*
-thirdparty/sophus/*
+thirdparty

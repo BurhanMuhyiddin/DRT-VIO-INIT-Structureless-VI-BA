@@ -6,27 +6,15 @@ bool PoseSO3LocalParameterization::Plus(
     double* x_plus_delta
 ) const
 {
-    // x = [ omega (3), position (3) ]
-    Eigen::Map<const Eigen::Vector3d> omega(x);
-    Eigen::Map<const Eigen::Vector3d> position(x + 3);
+    Eigen::Map<const Eigen::Vector3d> trans(x + 3);
+    SE3 se3_delta = SE3::exp(Eigen::Map<const Vector6d>(delta));
 
-    // delta = [ dtheta (3), dp (3) ]
-    Eigen::Map<const Eigen::Vector3d> dtheta(delta);
-    Eigen::Map<const Eigen::Vector3d> dp(delta + 3);
+    Eigen::Quaterniond quaterd_plus = se3_delta.rotation() * toQuaterniond(Eigen::Map<const Eigen::Vector3d>(x));
+    Eigen::Map<Eigen::Vector3d> angles_plus(x_plus_delta);
+    angles_plus = toAngleAxis(quaterd_plus);
 
-    // Convert so3 -> SO3
-    Sophus::SO3d R = Sophus::SO3d::exp(omega);
-
-    // Right-multiplicative update
-    Sophus::SO3d R_new = R * Sophus::SO3d::exp(dtheta);
-
-    // Write back
-    Eigen::Map<Eigen::Vector3d> omega_new(x_plus_delta);
-    Eigen::Map<Eigen::Vector3d> position_new(x_plus_delta + 3);
-
-    omega_new = R_new.log();      // back to so3
-    position_new = position + dp;
-
+    Eigen::Map<Eigen::Vector3d> trans_plus(x_plus_delta + 3);
+    trans_plus = se3_delta.rotation() * trans + se3_delta.translation();
     return true;
 }
 
