@@ -39,19 +39,22 @@ bool StructurelessVIBA::optimize()
     for (size_t i = 0; i < drt_vio_init_ptr_->int_frameid2_time_frameid.size() - 1; i++)
     {
         auto target1_tid = drt_vio_init_ptr_->int_frameid2_time_frameid.at(i);
-        auto target2_tid = drt_vio_init_ptr_->int_frameid2_time_frameid.at(i + 1);  
-
-        for (const auto &pts : drt_vio_init_ptr_->SFMConstruct)
+        for (size_t j = i + 1; j < drt_vio_init_ptr_->int_frameid2_time_frameid.size(); j++)
         {
-            // if a point is observed by two keyframes
-            if (pts.second.obs.find(target1_tid) != pts.second.obs.end() &&
-                pts.second.obs.find(target2_tid) != pts.second.obs.end())
-            {
-                Eigen::Vector3d zi = pts.second.obs.at(target1_tid).normalpoint;
-                Eigen::Vector3d zj = pts.second.obs.at(target2_tid).normalpoint;
+            auto target2_tid = drt_vio_init_ptr_->int_frameid2_time_frameid.at(j);  
 
-                EpipolarConstraintFactor* epipolar_constraint_factor = new EpipolarConstraintFactor(zi, zj, RIC[0], TIC[0]);
-                problem.AddResidualBlock(epipolar_constraint_factor, new ceres::HuberLoss(1.0), para_pose[i], para_pose[i+1]);
+            for (const auto &pts : drt_vio_init_ptr_->SFMConstruct)
+            {
+                // if a point is observed by two keyframes
+                if (pts.second.obs.find(target1_tid) != pts.second.obs.end() &&
+                    pts.second.obs.find(target2_tid) != pts.second.obs.end())
+                {
+                    Eigen::Vector3d zi = pts.second.obs.at(target1_tid).normalpoint;
+                    Eigen::Vector3d zj = pts.second.obs.at(target2_tid).normalpoint;
+
+                    EpipolarConstraintFactor* epipolar_constraint_factor = new EpipolarConstraintFactor(zi, zj, RIC[0], TIC[0]);
+                    problem.AddResidualBlock(epipolar_constraint_factor, new ceres::HuberLoss(1.0), para_pose[i], para_pose[j]);
+                }
             }
         }
     }
@@ -150,11 +153,10 @@ void StructurelessVIBA::double_array_to_states() const
         drt_vio_init_ptr_->velocity[i] = rot_diff * Eigen::Vector3d(para_speed_bias[i][0],
                                                                 para_speed_bias[i][1],
                                                                 para_speed_bias[i][2]);
-
+    }
     drt_vio_init_ptr_->biasg = Eigen::Vector3d(
         para_speed_bias[0][3], para_speed_bias[0][4], para_speed_bias[0][5]);
 
     drt_vio_init_ptr_->biasa = Eigen::Vector3d(
         para_speed_bias[0][6], para_speed_bias[0][7], para_speed_bias[0][8]);
-    }
 }

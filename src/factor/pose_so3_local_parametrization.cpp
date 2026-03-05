@@ -9,7 +9,7 @@ bool PoseSO3LocalParameterization::Plus(
     Eigen::Map<const Eigen::Vector3d> trans(x + 3);
     SE3 se3_delta = SE3::exp(Eigen::Map<const Vector6d>(delta));
 
-    Eigen::Quaterniond quaterd_plus = se3_delta.rotation() * toQuaterniond(Eigen::Map<const Eigen::Vector3d>(x));
+    Eigen::Quaterniond quaterd_plus = toQuaterniond(Eigen::Map<const Eigen::Vector3d>(x)) * se3_delta.rotation();
     Eigen::Map<Eigen::Vector3d> angles_plus(x_plus_delta);
     angles_plus = toAngleAxis(quaterd_plus);
 
